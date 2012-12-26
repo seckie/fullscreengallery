@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>Vertical Fullscreen Gallery</title>
+<meta name="X-UA-Compatible" content="IE=edge" />
+<meta name="vieport" content="width=device-width" />
+<link rel="stylesheet" href="css/screen.css" media="screen" />
+<script src="js/modernizr.js"></script>
+<script src="js/jquery-1.8.3.min.js"></script>
+<script src="js/jquery.preloadimg.js"></script>
+<script src="js/jquery.mousewheel.js"></script>
+<script src="js/underscore-min.js"></script>
+<script src="js/backbone-min.js"></script>
+<script src="js/fullscreengallery.js"></script>
+<script>
+if (typeof window.fsg != 'object') { window.fsg = {}; }
+
+/**
+ * Router class
+ */
+window.fsg.Workspace = Backbone.Router.extend({
+	initialize: function (options) {
+		this.opt = {
+			beforeHashchange: function (fragment) {
+				var dfd = $.Deferred();
+				dfd.resolve();
+				return dfd.promise();
+			},
+			hashchange: function (fragment) { }
+		};
+		_.extend(this.opt, options);
+	},
+	routes: {
+		'slide1': 'slide1',
+		'slide2': 'slide2',
+		'slide3': 'slide3',
+		'slide4': 'slide4',
+		'slide5': 'slide5'
+	},
+	slide1: function (query, page) {
+		this._action('slide1', query);
+	},
+	slide2: function (query, page) {
+		this._action('slide2', query);
+	},
+	slide3: function (query, page) {
+		this._action('slide3', query);
+	},
+	slide4: function (query, page) {
+		this._action('slide4', query);
+	},
+	slide5: function (query, page) {
+		this._action('slide5', query);
+	},
+	_action: function (fragment, query) {
+		this.opt.beforeHashchange(fragment, query).done(_.bind(function () {
+			this.opt.hashchange(fragment, query);
+		}, this));
+	}
+});
+
+/**
+ * DOM ready
+ */
+$(function () {
+	var $slide = $('.slide');
+	var defaultIndex = 0;
+	var scrollY = 0;
+	var hashId = location.hash.replace(/#([a-zA-Z0-9_\-]+)$/, '$1');
+	$slide.each(function (i, slide) {
+		if (slide.id === hashId) {
+			defaultIndex = i;
+		}
+	});
+	var workspace = new window.fsg.Workspace({
+		beforeHashchange: function (fragment) {
+			var dfd = $.Deferred();
+			dfd.resolve();
+			return dfd.promise();
+		},
+		hashchange: function (fragment) {
+		}
+	});
+	var gallery = new window.fsg.Gallery({
+		el: '.slide',
+		prevNav: '.prev',
+		nextNav: '.next',
+		defaultIndex: defaultIndex,
+		changeComplete: function (index) {
+			workspace.navigate($slide[index].id, { trigger: true });
+			this.restartChange();
+		}
+	});
+	var backgroundSizeAdjust = new window.fsg.backgroundSizeAdjust({
+		layerEl: '.slide',
+		width: 1600,
+		height: 1063,
+		test: true
+	});
+	var backgroundSizeFallback = new window.fsg.backgroundSizeFallback({
+		el: '.slide'
+	});
+	// mousewheel
+	$(document).on('mousewheel', function (e, delta, deltaX, deltaY) {
+		if (gallery.preventChange) { // process of changing
+			scrollY = 0;
+			return false;
+		}
+		scrollY += deltaY;
+		if (scrollY < -20) {
+			if (gallery.changeNext(e) === false) { // end of gallery
+				gallery.restartChange();
+			} else {
+				gallery.breakChange();
+			}
+			scrollY = 0;
+		} else if (scrollY > 20) {
+			if (gallery.changePrev(e) === false) { // end of gallery
+				gallery.restartChange();
+			} else {
+				gallery.breakChange();
+			}
+			scrollY = 0;
+		}
+	});
+	// required for routing
+	Backbone.history.start();
+});
+</script>
+</head>
+<body>
+<div class="container">
+<div class="slides">
+	
+<div class="slide" id="slide1">
+	<p>Slide 1</p>
+<!--/.slide--></div>
+
+<div class="slide" id="slide2">
+	<p>Slide 2</p>
+<!--/.slide--></div>
+
+<div class="slide" id="slide3">
+	<p>Slide 3</p>
+<!--/.slide--></div>
+
+<div class="slide" id="slide4">
+	<p>Slide 4</p>
+<!--/.slide--></div>
+
+<div class="slide" id="slide5">
+	<p>Slide 5</p>
+<!--/.slide--></div>
+
+<!--/.slides--></div>
+
+<div class="nav">
+<a href="#" class="prev">prev</a>
+<a href="#" class="next">next</a>
+<!--/.nav--></div>
+<!--/.container--></div>
+</body>
+</html>
